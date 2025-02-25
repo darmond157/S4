@@ -1,0 +1,49 @@
+services:
+  mysql:
+    image: mysql:8.4
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./s4-back/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql-data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - s4_network
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./s4-front
+      dockerfile: Dockerfile
+    ports:
+      - "4173:4173"
+    environment:
+      - VITE_BASE_URL=http://localhost:3000
+      - VITE_HOST=0.0.0.0
+    networks:
+      - s4_network
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./s4-back
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - SERVER_PORT=3000
+      - SERVER_HOST=0.0.0.0
+      - MYSQL_URL=mysql://root:root@mysql:3306/s4_sut
+      - JWT_SECRET=super_secret_s4_event_password
+      - SALT_WORK_FACTOR=12
+    restart: unless-stopped
+    networks:
+      - s4_network
+
+networks:
+  s4_network:
+
+volumes:
+ mysql-data:
+
